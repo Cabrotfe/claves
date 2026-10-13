@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buscador de ID Prueba</title>
+    <!-- Cargamos la librería SheetJS para leer Excel -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; }
+        .control-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        select { width: 100%; padding: 8px; }
+        button { padding: 10px 15px; background-color: #007bff; color: white; border: none; cursor: pointer; width: 100%; font-size: 16px; margin-top: 10px; }
+        button:hover { background-color: #0056b3; }
+        #resultado { margin-top: 20px; padding: 15px; background-color: #f8f9fa; border: 1px solid #ddd; text-align: center; }
+        .error { color: red; font-size: 14px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <h2>Buscar ID de Prueba</h2>
+
+    <div class="control-group">
+        <label for="establecimiento">Establecimiento:</label>
+        <select id="establecimiento"><option value="">Cargando...</option></select>
+    </div>
+
+    <div class="control-group">
+        <label for="grado">Grado:</label>
+        <select id="grado"><option value="">Cargando...</option></select>
+    </div>
+
+    <div class="control-group">
+        <label for="letra">Letra:</label>
+        <select id="letra"><option value="">Cargando...</option></select>
+    </div>
+
+    <div class="control-group">
+        <label for="nivel">Nivel / Tipo Evaluación:</label>
+        <select id="nivel"><option value="">Cargando...</option></select>
+    </div>
+
+    <button onclick="buscarID()">Buscar ID</button>
+
+    <div id="resultado">
+        <h3 id="textoResultado">Selecciona las opciones para ver el ID.</h3>
+    </div>
+
+    <script>
+        let datosExcel = [];
+
+        // 1. Función para cargar el Excel
+        async function cargarExcel() {
+            try {
+                // Asegúrate de que este nombre coincida con tu archivo al subirlo
+                const response = await fetch('claves_plataforma.xlsx'); 
+                
+                if (!response.ok) {
+                    throw new Error("No se pudo encontrar el archivo. Revisa el nombre.");
+                }
+
+                const arrayBuffer = await response.arrayBuffer();
+                const workbook = XLSX.read(arrayBuffer, {type: 'array'});
+                
+                const primeraHoja = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[primeraHoja];
+                
+                datosExcel = XLSX.utils.sheet_to_json(worksheet);
+                
+                poblarSelectores();
+                document.getElementById('textoResultado').innerText = "Base de datos cargada. Selecciona las opciones.";
+            } catch (error) {
+                console.error("Error al cargar el Excel:", error);
+                document.getElementById('textoResultado').innerHTML = `<span style="color: red;">Error al cargar la base de datos. Recuerda que si abres el archivo localmente con doble clic, el navegador bloquea la lectura por seguridad. Súbelo a GitHub Pages para que funcione.</span>`;
+            }
+        }
+
+        // 2. Función para obtener valores únicos y llenar los desplegables
+        function poblarSelectores() {
+            const establecimientos = [...new Set(datosExcel.map(item => item['Establecimiento']))].filter(Boolean);
+            const grados = [...new Set(datosExcel.map(item => item['Grado']))].filter(Boolean);
+            const letras = [...new Set(datosExcel.map(item => item['Letra']))].filter(Boolean);
+            const niveles = [...new Set(datosExcel.map(item => item['Nivel / Tipo Evaluación']))].filter(Boolean);
+
+            llenarSelect('establecimiento', establecimientos);
+            llenarSelect('grado', grados);
+            llenarSelect('letra', letras);
+            llenarSelect('nivel', niveles);
+        }
+
+        function llenarSelect(idElemento, valores) {
+            const select = document.getElementById(idElemento);
+            select.innerHTML = '<option value="">Seleccione...</option>';
+            valores.forEach(valor => {
+                const option = document.createElement('option');
+                option.value = valor;
+                option.text = valor;
+                select.appendChild(option);
+            });
+        }
+
+        // 3. Función que se ejecuta al presionar el botón
+        function buscarID() {
+            const estSeleccionado = document.getElementById('establecimiento').value;
+            const gradoSeleccionado = document.getElementById('grado').value; 
+            const letraSeleccionada = document.getElementById('letra').value;
+            const nivelSeleccionado = document.getElementById('nivel').value;
+
+            if(!estSeleccionado || !gradoSeleccionado || !letraSeleccionada || !nivelSeleccionado) {
+                document.getElementById('textoResultado').innerText = "Por favor, selecciona todos los campos (incluyendo la Letra).";
+                return;
+            }
+
+            // Buscar la fila que coincida con los 4 filtros
+            const resultado = datosExcel.find(item => 
+                String(item['Establecimiento']) === estSeleccionado &&
+                String(item['Grado']) === gradoSeleccionado &&
+                String(item['Letra']) === letraSeleccionada &&
+                String(item['Nivel / Tipo Evaluación']) === nivelSeleccionado
+            );
+
+            if (resultado && resultado['ID prueba']) {
+                document.getElementById('textoResultado').innerHTML = `El ID de la prueba es:<br><br><span style="font-size: 32px; color: #007bff;">${resultado['ID prueba']}</span>`;
+            } else {
+                document.getElementById('textoResultado').innerText = "No se encontró un ID para esta combinación de Establecimiento, Grado, Letra y Nivel.";
+            }
+        }
+
+        // Iniciar la carga al abrir
+        window.onload = cargarExcel;
+    </script>
+</body>
+</html>
