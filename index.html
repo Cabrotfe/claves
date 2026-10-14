@@ -9,7 +9,7 @@
     <style>
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background-color: #f4f7f6; /* Fondo gris claro para resaltar el centro */
+            background-color: #f4f7f6; 
             color: #333;
             margin: 0;
             padding: 20px;
@@ -20,16 +20,16 @@
             background-color: #ffffff; 
             padding: 30px; 
             border-radius: 12px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05); /* Sombra elegante */
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
         }
         .header-container {
             text-align: center;
             margin-bottom: 25px;
             padding-bottom: 20px;
-            border-bottom: 2px solid #f0f0f0; /* Línea separadora */
+            border-bottom: 2px solid #f0f0f0; 
         }
         .logo {
-            max-width: 220px; /* Tamaño ideal para el logo */
+            max-width: 220px; 
             height: auto;
         }
         h2 { 
@@ -50,7 +50,7 @@
         }
         button { 
             padding: 12px 15px; 
-            background-color: #000000; /* Botón negro haciendo juego con el logo */
+            background-color: #000000; 
             color: white; 
             border: none; 
             border-radius: 6px; 
@@ -119,11 +119,11 @@
 
         async function cargarExcel() {
             try {
-                // Nombre de tu archivo Excel actual
-                const response = await fetch('claves_plataforma.xlsx'); 
+                // El "?t=" evita que GitHub Pages use una versión antigua guardada en caché
+                const response = await fetch('claves_plataforma.xlsx?t=' + new Date().getTime()); 
                 
                 if (!response.ok) {
-                    throw new Error("No se pudo encontrar el archivo.");
+                    throw new Error("No se pudo encontrar el archivo Excel.");
                 }
 
                 const arrayBuffer = await response.arrayBuffer();
@@ -132,26 +132,41 @@
                 const primeraHoja = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[primeraHoja];
                 
-                datosExcel = XLSX.utils.sheet_to_json(worksheet);
+                // Lee el Excel y limpia espacios en blanco accidentales en los encabezados
+                const datosCrudos = XLSX.utils.sheet_to_json(worksheet);
+                datosExcel = datosCrudos.map(fila => {
+                    let filaLimpia = {};
+                    for (let clave in fila) {
+                        filaLimpia[clave.trim()] = fila[clave];
+                    }
+                    return filaLimpia;
+                });
                 
                 poblarSelectores();
                 document.getElementById('textoResultado').innerText = "Base de datos cargada. Selecciona las opciones.";
             } catch (error) {
                 console.error("Error:", error);
-                document.getElementById('textoResultado').innerHTML = `<span style="color: red;">Error al cargar la base de datos.</span>`;
+                // Mostramos el error exacto en pantalla para saber qué falló
+                document.getElementById('textoResultado').innerHTML = `<span style="color: red;">Error: ${error.message}</span>`;
             }
         }
 
         function poblarSelectores() {
-            const establecimientos = [...new Set(datosExcel.map(item => item['Establecimiento']))].filter(Boolean);
-            const grados = [...new Set(datosExcel.map(item => item['Grado']))].filter(Boolean);
-            const letras = [...new Set(datosExcel.map(item => item['Letra']))].filter(Boolean);
-            const niveles = [...new Set(datosExcel.map(item => item['Nivel / Tipo Evaluación']))].filter(Boolean);
+            try {
+                // El .sort() ordena las opciones alfabéticamente
+                const establecimientos = [...new Set(datosExcel.map(item => item['Establecimiento']))].filter(Boolean).sort();
+                const grados = [...new Set(datosExcel.map(item => item['Grado']))].filter(Boolean).sort();
+                const letras = [...new Set(datosExcel.map(item => item['Letra']))].filter(Boolean).sort();
+                const niveles = [...new Set(datosExcel.map(item => item['Nivel / Tipo Evaluación']))].filter(Boolean).sort();
 
-            llenarSelect('establecimiento', establecimientos);
-            llenarSelect('grado', grados);
-            llenarSelect('letra', letras);
-            llenarSelect('nivel', niveles);
+                llenarSelect('establecimiento', establecimientos);
+                llenarSelect('grado', grados);
+                llenarSelect('letra', letras);
+                llenarSelect('nivel', niveles);
+            } catch(e) {
+                console.error("Error al poblar:", e);
+                document.getElementById('textoResultado').innerHTML = `<span style="color: red;">Error al procesar las columnas del Excel.</span>`;
+            }
         }
 
         function llenarSelect(idElemento, valores) {
@@ -176,11 +191,12 @@
                 return;
             }
 
+            // Usamos trim() en la búsqueda por si hay espacios invisibles en el texto de las celdas
             const resultado = datosExcel.find(item => 
-                String(item['Establecimiento']) === estSeleccionado &&
-                String(item['Grado']) === gradoSeleccionado &&
-                String(item['Letra']) === letraSeleccionada &&
-                String(item['Nivel / Tipo Evaluación']) === nivelSeleccionado
+                String(item['Establecimiento'] || '').trim() === estSeleccionado &&
+                String(item['Grado'] || '').trim() === gradoSeleccionado &&
+                String(item['Letra'] || '').trim() === letraSeleccionada &&
+                String(item['Nivel / Tipo Evaluación'] || '').trim() === nivelSeleccionado
             );
 
             if (resultado && resultado['ID prueba']) {
