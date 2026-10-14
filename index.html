@@ -3,61 +3,127 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buscador de ID Prueba</title>
+    <title>Buscador de ID Prueba - Astoreca</title>
     <!-- Cargamos la librería SheetJS para leer Excel -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #f4f7f6; /* Fondo gris claro para resaltar el centro */
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .app-container {
+            max-width: 500px; 
+            margin: 20px auto; 
+            background-color: #ffffff; 
+            padding: 30px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); /* Sombra elegante */
+        }
+        .header-container {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0; /* Línea separadora */
+        }
+        .logo {
+            max-width: 220px; /* Tamaño ideal para el logo */
+            height: auto;
+        }
+        h2 { 
+            text-align: center; 
+            color: #1a1a1a; 
+            font-size: 22px;
+            margin-top: 0;
+        }
         .control-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        select { width: 100%; padding: 8px; }
-        button { padding: 10px 15px; background-color: #007bff; color: white; border: none; cursor: pointer; width: 100%; font-size: 16px; margin-top: 10px; }
-        button:hover { background-color: #0056b3; }
-        #resultado { margin-top: 20px; padding: 15px; background-color: #f8f9fa; border: 1px solid #ddd; text-align: center; }
-        .error { color: red; font-size: 14px; margin-top: 10px; }
+        label { display: block; margin-bottom: 6px; font-weight: bold; font-size: 14px; color: #555; }
+        select { 
+            width: 100%; 
+            padding: 10px; 
+            border-radius: 6px; 
+            border: 1px solid #ccc;
+            font-size: 15px;
+            box-sizing: border-box;
+        }
+        button { 
+            padding: 12px 15px; 
+            background-color: #000000; /* Botón negro haciendo juego con el logo */
+            color: white; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            width: 100%; 
+            font-size: 16px; 
+            font-weight: bold;
+            margin-top: 15px; 
+            transition: background-color 0.3s;
+        }
+        button:hover { background-color: #333333; }
+        #resultado { 
+            margin-top: 25px; 
+            padding: 20px; 
+            background-color: #f8f9fa; 
+            border: 1px solid #e9ecef;
+            border-radius: 8px; 
+            text-align: center; 
+        }
+        #textoResultado {
+            margin: 0;
+            font-size: 16px;
+            color: #444;
+        }
     </style>
 </head>
 <body>
 
-    <h2>Buscar ID de Prueba</h2>
+    <div class="app-container">
+        <!-- Encabezado con logo -->
+        <div class="header-container">
+            <img src="logo.png" alt="Logo Astoreca" class="logo">
+        </div>
 
-    <div class="control-group">
-        <label for="establecimiento">Establecimiento:</label>
-        <select id="establecimiento"><option value="">Cargando...</option></select>
-    </div>
+        <h2>Buscador de ID Prueba</h2>
 
-    <div class="control-group">
-        <label for="grado">Grado:</label>
-        <select id="grado"><option value="">Cargando...</option></select>
-    </div>
+        <div class="control-group">
+            <label for="establecimiento">Establecimiento:</label>
+            <select id="establecimiento"><option value="">Cargando...</option></select>
+        </div>
 
-    <div class="control-group">
-        <label for="letra">Letra:</label>
-        <select id="letra"><option value="">Cargando...</option></select>
-    </div>
+        <div class="control-group">
+            <label for="grado">Grado:</label>
+            <select id="grado"><option value="">Cargando...</option></select>
+        </div>
 
-    <div class="control-group">
-        <label for="nivel">Nivel / Tipo Evaluación:</label>
-        <select id="nivel"><option value="">Cargando...</option></select>
-    </div>
+        <div class="control-group">
+            <label for="letra">Letra:</label>
+            <select id="letra"><option value="">Cargando...</option></select>
+        </div>
 
-    <button onclick="buscarID()">Buscar ID</button>
+        <div class="control-group">
+            <label for="nivel">Nivel / Tipo Evaluación:</label>
+            <select id="nivel"><option value="">Cargando...</option></select>
+        </div>
 
-    <div id="resultado">
-        <h3 id="textoResultado">Selecciona las opciones para ver el ID.</h3>
+        <button onclick="buscarID()">Buscar ID</button>
+
+        <div id="resultado">
+            <p id="textoResultado">Selecciona las opciones para ver el ID.</p>
+        </div>
     </div>
 
     <script>
         let datosExcel = [];
 
-        // 1. Función para cargar el Excel
         async function cargarExcel() {
             try {
-                // Asegúrate de que este nombre coincida con tu archivo al subirlo
-                const response = await fetch('claves_plataforma.xlsx'); 
+                // Nombre de tu archivo Excel actual
+                const response = await fetch('claves_plataforma_2.xlsx'); 
                 
                 if (!response.ok) {
-                    throw new Error("No se pudo encontrar el archivo. Revisa el nombre.");
+                    throw new Error("No se pudo encontrar el archivo.");
                 }
 
                 const arrayBuffer = await response.arrayBuffer();
@@ -71,12 +137,11 @@
                 poblarSelectores();
                 document.getElementById('textoResultado').innerText = "Base de datos cargada. Selecciona las opciones.";
             } catch (error) {
-                console.error("Error al cargar el Excel:", error);
-                document.getElementById('textoResultado').innerHTML = `<span style="color: red;">Error al cargar la base de datos. Recuerda que si abres el archivo localmente con doble clic, el navegador bloquea la lectura por seguridad. Súbelo a GitHub Pages para que funcione.</span>`;
+                console.error("Error:", error);
+                document.getElementById('textoResultado').innerHTML = `<span style="color: red;">Error al cargar la base de datos.</span>`;
             }
         }
 
-        // 2. Función para obtener valores únicos y llenar los desplegables
         function poblarSelectores() {
             const establecimientos = [...new Set(datosExcel.map(item => item['Establecimiento']))].filter(Boolean);
             const grados = [...new Set(datosExcel.map(item => item['Grado']))].filter(Boolean);
@@ -100,7 +165,6 @@
             });
         }
 
-        // 3. Función que se ejecuta al presionar el botón
         function buscarID() {
             const estSeleccionado = document.getElementById('establecimiento').value;
             const gradoSeleccionado = document.getElementById('grado').value; 
@@ -108,11 +172,10 @@
             const nivelSeleccionado = document.getElementById('nivel').value;
 
             if(!estSeleccionado || !gradoSeleccionado || !letraSeleccionada || !nivelSeleccionado) {
-                document.getElementById('textoResultado').innerText = "Por favor, selecciona todos los campos (incluyendo la Letra).";
+                document.getElementById('textoResultado').innerText = "Por favor, selecciona todos los campos.";
                 return;
             }
 
-            // Buscar la fila que coincida con los 4 filtros
             const resultado = datosExcel.find(item => 
                 String(item['Establecimiento']) === estSeleccionado &&
                 String(item['Grado']) === gradoSeleccionado &&
@@ -121,13 +184,12 @@
             );
 
             if (resultado && resultado['ID prueba']) {
-                document.getElementById('textoResultado').innerHTML = `El ID de la prueba es:<br><br><span style="font-size: 32px; color: #007bff;">${resultado['ID prueba']}</span>`;
+                document.getElementById('textoResultado').innerHTML = `El ID de la prueba es:<br><br><strong style="font-size: 36px; color: #000;">${resultado['ID prueba']}</strong>`;
             } else {
-                document.getElementById('textoResultado').innerText = "No se encontró un ID para esta combinación de Establecimiento, Grado, Letra y Nivel.";
+                document.getElementById('textoResultado').innerText = "No se encontró un ID para esta combinación.";
             }
         }
 
-        // Iniciar la carga al abrir
         window.onload = cargarExcel;
     </script>
 </body>
